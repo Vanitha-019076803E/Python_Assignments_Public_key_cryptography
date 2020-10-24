@@ -1,0 +1,68 @@
+def keyGen(n=256):
+    "Generates an RSA key"
+    while True:
+        p=random_prime(2^(n//2));q=random_prime(2^(n//2));e=3
+        if gcd(e,(p-1)*(q-1))==1: break
+    d=inverse_mod(e,(p-1)*(q-1))
+    Nn=p*q
+    print("p=",p,"q=",q)
+    print("N=",Nn)
+    print("Size of N:",Nn.nbits())
+    return Nn,p,q,e,d
+
+"Finds a small root of polynomial x^3+ax^2+bx+c=0 mod N"
+def CopPolyDeg3(a,b,c,Nn):
+    n=Nn.nbits()
+    X=2^(n//6-3)
+    M=matrix(ZZ,[[X^3,a*X^2,b*X,c],\
+                 [0,Nn*X^2,0,0],\
+                 [0,0,Nn*X,0],\
+                 [0,0,0,Nn]])
+    V=M.LLL()    
+    v=V[0]
+    R.<x> = ZZ[] 
+    f=sum(v[i]*x^(3-i)/X^(3-i)for i in range(4)) 
+    #f=sum(v[i]*x^(2-i)/X^(2-i) for i in range(3))
+    return f.roots()
+
+"""
+"FINDING NEW BOUND ON x0"
+
+polynomial with degree 3 
+
+f(x) = x^3+ax^2+bx+c=0 mod N
+h(x) = αf(x)+βNx^2+γNx+δN
+
+M=([[x^3,ax^2,bx,c],\
+        [0,Nx^2,0,0],\
+        [0,0,Nx,0],\
+        [0,0,0,N]])
+    
+dim M = 4
+det M = x^6*N^3
+(det M)^(1/dim M) < N
+(x^6*N^3)^(1/4) < N
+x^(6/4)*N^(3/4) < N
+x=N^(1/6) = 2^(n/6)
+
+New bound on x0 is 2^(n/6)
+
+                    
+"""
+
+def test_Deg3():
+    """Generates a random polynomial with a small root x0 modulo Nn and recovers this root.""" 
+    Nn,p,q,e,d=keyGen()
+    
+    n=Nn.nbits()
+    x0=ZZ.random_element(2^(n//6-10)) #Explanation of how I found a new bound is given above
+    a=ZZ.random_element(Nn)
+    b=ZZ.random_element(Nn)
+    c=mod(-x0^3-a*x0^2-b*x0,Nn)
+    print("Small roots of polynomials of degree 3")
+    print("x0=",x0)
+    print CopPolyDeg3(a,b,c,Nn)
+
+    
+if __name__== "__main__":
+    test_Deg3()
